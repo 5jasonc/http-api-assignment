@@ -6,7 +6,80 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script type="text/babel">
-
+	const handleResponse = (xhr) => {
+		const type = xhr.getResponseHeader('content-type');
+		const h1 = document.createElement('h1');
+		const p = document.createElement('p');
+		
+		let id;
+		let message;
+		
+		if(type === 'application/json') {
+			const obj = JSON.parse(xhr.response);
+			id = obj.id;
+			message = obj.message;
+		} else if(type === 'text/xml') {
+			if(xhr.responseXML.querySelector('id')) id = xhr.responseXML.querySelector('id').textContent;
+			message = xhr.responseXML.querySelector('message').textContent;
+		}
+		else {
+			const obj = JSON.parse(xhr.response);
+			id = obj.id;
+			message = obj.message;
+		}
+		
+		p.textContent = `Message: ${message}`;
+		
+		switch(xhr.status) {
+			case 200:
+				h1.textContent = "Success";
+				break;
+			case 400:
+				h1.textContent = "Bad Request";
+				break;
+			case 401:
+				h1.textContent = "Unauthorized";
+				break;
+			case 403:
+				h1.textContent = "Forbidden";
+				break;
+			case 500:
+				h1.textContent = "Internal Server Error";
+				break;
+			case 501:
+				h1.textContent = "Not Implemented";
+				break;
+			case 404:
+				h1.textContent = "Resource Not Found";
+				break;
+			default:
+				h1.textContent = "Invalid Status Code";
+				p.textContent = "Status code not implemented by client.";
+				break;
+		}
+		
+		content.appendChild(h1);
+		content.appendChild(p);
+	};
+	
+	const sendAjax = (url, acceptedType) => {
+		const xhr = new XMLHttpRequest();
+		xhr.open('GET', url);
+		xhr.setRequestHeader("Accept", acceptedType);
+		xhr.onload = () => handleResponse(xhr);
+		xhr.send();
+	};
+	
+	const init = () => {
+		const sendAjaxHandler = () => {
+			content.innerHTML = '';
+			sendAjax(page.value, type.value);
+		};
+		
+		send.onclick = sendAjaxHandler;
+	};
+	
+	window.onload = init;
   </script>
 </head>
 <body>
